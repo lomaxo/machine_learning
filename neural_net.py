@@ -91,7 +91,7 @@ class Network:
         \partial a for the output activations."""
         return (output_activations-y)
 
-net = Network([2,100,100, 1])
+net = Network([2, 10, 1])
 inp00 = numpy.array([[0],[0]])
 inp10 = numpy.array([[1],[0]])
 inp01 = numpy.array([[0],[1]])
