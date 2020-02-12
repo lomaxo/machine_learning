@@ -41,10 +41,8 @@ class Network:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        self.weights = [w-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b-(eta/len(mini_batch))*nb
-                       for b, nb in zip(self.biases, nabla_b)]
+        self.weights = [w-(eta/len(mini_batch))*nw for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b-(eta/len(mini_batch))*nb for b, nb in zip(self.biases, nabla_b)]
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
@@ -93,7 +91,7 @@ class Network:
         \partial a for the output activations."""
         return (output_activations-y)
 
-net = Network([2,5,1])
+net = Network([2,100,100, 1])
 inp00 = numpy.array([[0],[0]])
 inp10 = numpy.array([[1],[0]])
 inp01 = numpy.array([[0],[1]])
@@ -105,10 +103,10 @@ def test_gate(net):
     print(f"(1, 1): {net.feedforward(inp11)}")
 
 def update_nand(net):
-    net.update_mini_batch([(inp00, numpy.array([1]))], 3.0)
-    net.update_mini_batch([(inp01, numpy.array([1]))], 3.0)
-    net.update_mini_batch([(inp10, numpy.array([1]))], 3.0)
-    net.update_mini_batch([(inp11, numpy.array([0]))], 3.0)
+    net.update_mini_batch([(inp00, numpy.array([1]))], 1.0)
+    net.update_mini_batch([(inp01, numpy.array([1]))], 1.0)
+    net.update_mini_batch([(inp10, numpy.array([1]))], 1.0)
+    net.update_mini_batch([(inp11, numpy.array([0]))], 1.0)
 
 print("Before training:")
 test_gate(net)
@@ -116,10 +114,3 @@ for _ in range(1000):
     update_nand(net)
 print("After training:")
 test_gate(net)
-
-# for i in range(net.layers-1):
-#     print(net.biases[i], net.weights[i])
-#     print("---")
-# print(net.weights[0])
-
-# print(sigmoid(net.weights[0]))
