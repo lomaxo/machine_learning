@@ -91,26 +91,36 @@ class Network:
         \partial a for the output activations."""
         return (output_activations-y)
 
-net = Network([2, 10, 1])
-inp00 = numpy.array([[0],[0]])
-inp10 = numpy.array([[1],[0]])
-inp01 = numpy.array([[0],[1]])
-inp11 = numpy.array([[1],[1]])
-inputs = numpy.array([inp00, inp01, inp10, inp11])
-outputs = numpy.array([[1],[1],[1],[0]])
-training_data = list(zip(inputs, outputs))
+if __name__ == "__main__":
+    # Create a network
+    net = Network([2, 10, 1])
 
-def test_gate(net):
-    print(f"(0, 0): {net.feedforward(inp00)}")
-    print(f"(0, 1): {net.feedforward(inp01)}")
-    print(f"(1, 0): {net.feedforward(inp10)}")
-    print(f"(1, 1): {net.feedforward(inp11)}")
+    # Create some possible input matrices
+    inp00 = numpy.array([[0],[0]])
+    inp10 = numpy.array([[1],[0]])
+    inp01 = numpy.array([[0],[1]])
+    inp11 = numpy.array([[1],[1]])
 
-print("Before training:")
-test_gate(net)
-for _ in range(1000):
-    # update_nand(net)
-    net.update_from_batch(training_data, 1.0)
+    # Zip inputs with expected outputs to create training data
+    inputs = numpy.array([inp00, inp01, inp10, inp11])
+    outputs = numpy.array([[1],[1],[1],[0]])
+    training_data = list(zip(inputs, outputs))
 
-print("After training:")
-test_gate(net)
+    # Function for testing the output
+    def test_gate(net):
+        print(f"(0, 0): {net.feedforward(inp00)}")
+        print(f"(0, 1): {net.feedforward(inp01)}")
+        print(f"(1, 0): {net.feedforward(inp10)}")
+        print(f"(1, 1): {net.feedforward(inp11)}")
+
+    # Display the starting output
+    print("Before training:")
+    test_gate(net)
+
+    # Train
+    for _ in range(1000):
+        net.update_from_batch(training_data, 1.0)
+
+    # Display the final results
+    print("After training:")
+    test_gate(net)
