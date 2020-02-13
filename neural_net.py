@@ -28,21 +28,21 @@ class Network:
             random.shuffle(training_data)
             mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
-                self.update_mini_batch(mini_batch, eta)
+                self.update_from_batch(mini_batch, eta)
             if test_data:
                 print(f"Epoch {j}, {self.evaluate(test_data)} /  {n_test})")
             else:
                 print(f"Epoch {j} complete.")
 
-    def update_mini_batch(self, mini_batch, eta):
+    def update_from_batch(self, batch, eta):
         nabla_b = [numpy.zeros(b.shape) for b in self.biases]
         nabla_w = [numpy.zeros(w.shape) for w in self.weights]
-        for x, y in mini_batch:
+        for x, y in batch:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        self.weights = [w-(eta/len(mini_batch))*nw for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b-(eta/len(mini_batch))*nb for b, nb in zip(self.biases, nabla_b)]
+        self.weights = [w - (eta / len(batch)) * nw for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b - (eta / len(batch)) * nb for b, nb in zip(self.biases, nabla_b)]
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
@@ -103,10 +103,10 @@ def test_gate(net):
     print(f"(1, 1): {net.feedforward(inp11)}")
 
 def update_nand(net):
-    net.update_mini_batch([(inp00, numpy.array([1]))], 1.0)
-    net.update_mini_batch([(inp01, numpy.array([1]))], 1.0)
-    net.update_mini_batch([(inp10, numpy.array([1]))], 1.0)
-    net.update_mini_batch([(inp11, numpy.array([0]))], 1.0)
+    net.update_from_batch([(inp00, numpy.array([1]))], 1.0)
+    net.update_from_batch([(inp01, numpy.array([1]))], 1.0)
+    net.update_from_batch([(inp10, numpy.array([1]))], 1.0)
+    net.update_from_batch([(inp11, numpy.array([0]))], 1.0)
 
 print("Before training:")
 test_gate(net)
