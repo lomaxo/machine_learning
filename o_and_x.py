@@ -1,4 +1,5 @@
 import random
+import numpy as np
 class TTTGrid:
     def __init__(self):
         self.GRID_SIZE = 3
@@ -44,7 +45,7 @@ class TTTGrid:
 
 
 training_data = []
-for _ in range(10000):
+for _ in range(10):
     grid = TTTGrid()
     player_marker = 'x'
     draw = False
@@ -75,3 +76,21 @@ for _ in range(10000):
             training_data.append((pos, '-'))
 
 print(training_data)
+formatted_training_data = []
+for item, winner in training_data:
+    input_array = []
+    for i in item:
+        if i == 'x':
+            input_array.extend([1,0])
+        elif i == 'o':
+            input_array.extend([0,1])
+        else:
+            input_array.extend([0,0])
+    if winner == 'x':
+        win = [1,0]
+    elif winner == 'o':
+        win = [0,1]
+    else:
+        win = [0,0]
+    formatted_training_data.append((np.array(input_array), win))
+print(formatted_training_data)
