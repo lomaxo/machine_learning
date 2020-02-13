@@ -1,9 +1,17 @@
 import random
 import numpy as np
+import neural_net
+
 class TTTGrid:
-    def __init__(self):
+    def __init__(self, grid_list = []):
         self.GRID_SIZE = 3
-        self.grid_list = [None] * self.GRID_SIZE**2
+        if len(grid_list) > 0 and len(grid_list) != self.GRID_SIZE**2:
+            raise("Wrong grid size")
+
+        if len(grid_list) > 0:
+            self.grid_list = grid_list
+        else:
+            self.grid_list = [None] * self.GRID_SIZE**2
 
     def get_empty(self):
         ret = []
@@ -43,9 +51,9 @@ class TTTGrid:
 
 
 
-
+# Create training data
 training_data = []
-for _ in range(10):
+for _ in range(100):
     grid = TTTGrid()
     player_marker = 'x'
     draw = False
@@ -92,5 +100,24 @@ for item, winner in training_data:
         win = [0,1]
     else:
         win = [0,0]
-    formatted_training_data.append((np.array(input_array), win))
-print(formatted_training_data)
+    formatted_training_data.append((np.array([input_array]).transpose(), np.array([win]).T))
+# print(formatted_training_data)
+# a = np.array([[1,2,3,4,5]])
+# print(a)
+# print(a.T)
+net = neural_net.Network([18, 20, 20, 2])
+# Train
+print("Training...")
+for _ in range(100):
+    net.update_from_batch(formatted_training_data, 1.0)
+
+def test_game():
+    for state, winner in formatted_training_data:
+        out = net.feedforward(state)
+        score = out[0][0]*(-1) + out[1][0]
+        print(f"{out.T}, {winner.T}, {score}")
+
+        #print(len(state.T[0]))
+        #n_grid = TTTGrid(state.T[0])
+        #n_grid.display_grid()
+test_game()
