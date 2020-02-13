@@ -20,19 +20,19 @@ class Network:
             a = sigmoid(numpy.dot(w, a) + b)
         return a
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta, test_data=None):
-        """ training_data: a list of tuples of (input, expected result) """
-        if test_data: n_test = len(test_data)
-        n = len(training_data)
-        for j in range(epochs):
-            random.shuffle(training_data)
-            mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
-            for mini_batch in mini_batches:
-                self.update_from_batch(mini_batch, eta)
-            if test_data:
-                print(f"Epoch {j}, {self.evaluate(test_data)} /  {n_test})")
-            else:
-                print(f"Epoch {j} complete.")
+    # def SGD(self, training_data, epochs, mini_batch_size, eta, test_data=None):
+    #     """ training_data: a list of tuples of (input, expected result) """
+    #     if test_data: n_test = len(test_data)
+    #     n = len(training_data)
+    #     for j in range(epochs):
+    #         random.shuffle(training_data)
+    #         mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
+    #         for mini_batch in mini_batches:
+    #             self.update_from_batch(mini_batch, eta)
+    #         if test_data:
+    #             print(f"Epoch {j}, {self.evaluate(test_data)} /  {n_test})")
+    #         else:
+    #             print(f"Epoch {j} complete.")
 
     def update_from_batch(self, batch, eta):
         nabla_b = [numpy.zeros(b.shape) for b in self.biases]
@@ -78,13 +78,13 @@ class Network:
             nabla_w[-l] = numpy.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
-    def evaluate(self, test_data):
-        """Return the number of test inputs for which the neural
-        network outputs the correct result. Note that the neural
-        network's output is assumed to be the index of whichever
-        neuron in the final layer has the highest activation."""
-        test_results = [(np.argmax(self.feedforward(x)), y) for (x, y) in test_data]
-        return sum(int(x == y) for (x, y) in test_results)
+    # def evaluate(self, test_data):
+    #     """Return the number of test inputs for which the neural
+    #     network outputs the correct result. Note that the neural
+    #     network's output is assumed to be the index of whichever
+    #     neuron in the final layer has the highest activation."""
+    #     test_results = [(numpy.argmax(self.feedforward(x)), y) for (x, y) in test_data]
+    #     return sum(int(x == y) for (x, y) in test_results)
 
     def cost_derivative(self, output_activations, y):
         """Return the vector of partial derivatives \partial C_x /
@@ -96,6 +96,7 @@ inp00 = numpy.array([[0],[0]])
 inp10 = numpy.array([[1],[0]])
 inp01 = numpy.array([[0],[1]])
 inp11 = numpy.array([[1],[1]])
+
 def test_gate(net):
     print(f"(0, 0): {net.feedforward(inp00)}")
     print(f"(0, 1): {net.feedforward(inp01)}")
