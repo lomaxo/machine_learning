@@ -96,6 +96,9 @@ inp00 = numpy.array([[0],[0]])
 inp10 = numpy.array([[1],[0]])
 inp01 = numpy.array([[0],[1]])
 inp11 = numpy.array([[1],[1]])
+inputs = numpy.array([inp00, inp01, inp10, inp11])
+outputs = numpy.array([[1],[1],[1],[0]])
+test_data = list(zip(inputs, outputs))
 
 def test_gate(net):
     print(f"(0, 0): {net.feedforward(inp00)}")
@@ -103,15 +106,11 @@ def test_gate(net):
     print(f"(1, 0): {net.feedforward(inp10)}")
     print(f"(1, 1): {net.feedforward(inp11)}")
 
-def update_nand(net):
-    net.update_from_batch([(inp00, numpy.array([1]))], 1.0)
-    net.update_from_batch([(inp01, numpy.array([1]))], 1.0)
-    net.update_from_batch([(inp10, numpy.array([1]))], 1.0)
-    net.update_from_batch([(inp11, numpy.array([0]))], 1.0)
-
 print("Before training:")
 test_gate(net)
 for _ in range(1000):
-    update_nand(net)
+    # update_nand(net)
+    net.update_from_batch(test_data, 1.0)
+
 print("After training:")
 test_gate(net)
