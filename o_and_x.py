@@ -52,14 +52,17 @@ class TTTGrid:
 
     def diagonal_test(self, marker):
         match = True
-        for i in range(self.GRID_SIZE):
-            if self.grid_list[i + i*self.GRID_SIZE] != marker:
-                match = False
-        if match: return True
-        for i in range(self.GRID_SIZE):
-            if self.grid_list[(self.GRID_SIZE-i-1) + i*self.GRID_SIZE] != marker:
-                match = False
-        if match: return True
+        if self.grid_list[0] == marker and self.grid_list[4] == marker and self.grid_list[8] == marker: return True
+        if self.grid_list[2] == marker and self.grid_list[4] == marker and self.grid_list[6] == marker: return True
+        return False
+        # for i in range(self.GRID_SIZE):
+        #     if self.grid_list[i + i*self.GRID_SIZE] != marker:
+        #         match = False
+        # if match: return True
+        # for i in range(self.GRID_SIZE):
+        #     if self.grid_list[(self.GRID_SIZE-i-1) + i*self.GRID_SIZE] != marker:
+        #         match = False
+        # if match: return True
 
     def test_win(self, player_marker):
         return self.vertical_test(player_marker) or self.horizontal_test(player_marker) or self.diagonal_test(player_marker)
@@ -78,7 +81,7 @@ class TTTGrid:
             best_move = min(results, key=lambda item: item[1])[0]
         else:
             best_move = max(results, key=lambda item: item[1])[0]
-        print(best_move)
+        # print(best_move)
         return best_move
 
 def get_random_training_data(n_games):
@@ -100,16 +103,12 @@ def get_random_training_data(n_games):
             else:
                 draw = True
             grid.set_pos(next_mark, player_marker)
-            #grid.display_grid()
             positions.append(list(grid.grid_list))
 
         if not draw:
-            #print(f"Winner is {player_marker}")
-            #print(positions)
             for pos in positions:
                 training_data.append((pos, player_marker))
         else:
-            #print("Draw")
             for pos in positions:
                 training_data.append((pos, '-'))
     return training_data
@@ -154,10 +153,11 @@ def test_game():
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
-def play_game(net):
+def play_game(net, display=False):
     grid = TTTGrid()
     player_marker = 'x'
     draw = False
+    positions = []
     while not grid.test_win(player_marker) and not draw:
         if player_marker == 'x':
             player_marker = 'o'
@@ -168,27 +168,42 @@ def play_game(net):
             draw = True
         else:
             grid.set_pos(next_mark, player_marker)
-            grid.display_grid()
-
+            if display: grid.display_grid()
+        positions.append(grid.grid_list)
     if not draw:
-        print(f"Winner is {player_marker}")
+        if display: print(f"Winner is {player_marker}")
+        winner = player_marker
     else:
-        print("Draw")
+        if display: print("Draw")
+        winner = '-'
+    data = []
+    for pos in positions:
+        data.append((pos, winner))
+    return data
 
 if __name__ == "__main__":
-    random_games = get_random_training_data(100)
+    # Create some random test data
+
+    random_games = get_random_training_data(10000)
     random.shuffle(random_games)
     print("Size of training data:", len(random_games))
     formatted_training_data = format_training_data(random_games)
 
     # Create a new net or load the previous one.
+
     # net = neural_net.Network([18, 20, 20, 2])
     net = neural_net.load_net('net.p')
 
     # Train
-    print("Training...")
-    for _ in range(1000):
-        net.update_from_batch(formatted_training_data, 1.0)
+    print("Training.")
+    print("Random training data...")
+    net.SGD(formatted_training_data, 10, 1000, 1)
+    # for _ in range(100):
+    #     net.update_from_batch(formatted_training_data, 1.0)
+
+    # print("Self-play...")
+    # for _ in range(100):
+    #     data = play_game(net)
+    #     net.update_from_batch(format_training_data(data), 1.0)
     net.save_net('net.p')
-    # test_game()
-    play_game(net)
+    play_game(net, True)
