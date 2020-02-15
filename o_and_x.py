@@ -60,6 +60,17 @@ class TTTGrid:
                 match = False
         if match: return True
 
+    def get_best_move(self, net, player):
+        options = self.get_empty()
+        if len(options) == 0:
+            return None
+        for move in options:
+            new_grid = copy(self)
+            new_grid.set_pos(player)
+            in_matrix = game_state_to_matrix(new_grid.grid_list)
+            out = net.feedforward(in_matrix)
+            print(out)
+
 def get_random_training_data(n_games):
     # Create training data
     training_data = []
@@ -127,16 +138,26 @@ def test_game():
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
-def xsave_net(net, filename):
-    print(f'saving NN as "{filename}"...')
-    with open(filename, 'wb') as file:
-        pickle.dump(net, file)
+def play_game(net):
+    grid = TTTGrid()
+    player_marker = 'x'
+    draw = False
+    while not grid.vertical_test(player_marker) and not grid.horizontal_test(player_marker) and not grid.diagonal_test(player_marker) and not draw:
+        if player_marker == 'x':
+            player_marker = 'o'
+        else:
+            player_marker = 'x'
+        next_mark = grid.get_best_move(net, player_marker)
+        if not next_mark:
+            draw = True
+        else:
+            grid.set_pos(next_mark, player_marker)
+            grid.display_grid()
 
-def xload_net(filename):
-    print(f'loading NN from "{filename}"...')
-    with open(filename, 'rb') as file:
-        net =pickle.load(file)
-    return net
+    if not draw:
+        print(f"Winner is {player_marker}")
+    else:
+        print("Draw")
 
 if __name__ == "__main__":
     random_games = get_random_training_data(100)
@@ -150,7 +171,7 @@ if __name__ == "__main__":
 
     # Train
     print("Training...")
-    for _ in range(1000):
+    for _ in range(100):
         net.update_from_batch(formatted_training_data, 1.0)
     net.save_net('net.p')
     test_game()
