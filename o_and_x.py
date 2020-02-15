@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import neural_net
+import pickle
 
 class TTTGrid:
     def __init__(self, grid_list = []):
@@ -48,68 +49,77 @@ class TTTGrid:
                     match = False
             if match: return True
 
+    def diagonal_test(self, marker):
+        match = True
+        for i in range(self.GRID_SIZE):
+            if self.grid_list[i + i*self.GRID_SIZE] != marker:
+                match = False
+        if match: return True
+        for i in range(self.GRID_SIZE):
+            if self.grid_list[(self.GRID_SIZE-i-1) + i*self.GRID_SIZE] != marker:
+                match = False
+        if match: return True
 
+def get_random_training_data(n_games):
+    # Create training data
+    training_data = []
+    for _ in range(n_games):
+        grid = TTTGrid()
+        player_marker = 'x'
+        draw = False
+        positions = []
+        while not grid.vertical_test(player_marker) and not grid.horizontal_test(player_marker) and not grid.diagonal_test(player_marker) and not draw:
+            if player_marker == 'x':
+                player_marker = 'o'
+            else:
+                player_marker = 'x'
+            options = grid.get_empty()
+            if options:
+                next_mark = random.choice(options)
+            else:
+                draw = True
+            grid.set_pos(next_mark, player_marker)
+            #grid.display_grid()
+            positions.append(list(grid.grid_list))
 
-
-# Create training data
-training_data = []
-for _ in range(100):
-    grid = TTTGrid()
-    player_marker = 'x'
-    draw = False
-    positions = []
-    while not grid.vertical_test(player_marker) and not grid.horizontal_test(player_marker) and not draw:
-        if player_marker == 'x':
-            player_marker = 'o'
+        if not draw:
+            #print(f"Winner is {player_marker}")
+            #print(positions)
+            for pos in positions:
+                training_data.append((pos, player_marker))
         else:
-            player_marker = 'x'
-        options = grid.get_empty()
-        if options:
-            next_mark = random.choice(options)
-        else:
-            draw = True
-        grid.set_pos(next_mark, player_marker)
-        #grid.display_grid()
-        positions.append(list(grid.grid_list))
+            #print("Draw")
+            for pos in positions:
+                training_data.append((pos, '-'))
+    return training_data
 
-
-    if not draw:
-        #print(f"Winner is {player_marker}")
-        #print(positions)
-        for pos in positions:
-            training_data.append((pos, player_marker))
+def get_matrix_from_marker(marker):
+    if marker == 'x':
+        return np.array([[1,0]]).transpose()
+    elif marker == 'o':
+        return np.array([[0,1]]).transpose()
     else:
-        #print("Draw")
-        for pos in positions:
-            training_data.append((pos, '-'))
+        return np.array([[0,0]]).transpose()
 
-print(training_data)
-formatted_training_data = []
-for item, winner in training_data:
-    input_array = []
-    for i in item:
+
+def game_state_to_matrix(grid_list):
+    ret_array = []
+    for i in grid_list:
         if i == 'x':
-            input_array.extend([1,0])
+            ret_array.extend([1,0])
         elif i == 'o':
-            input_array.extend([0,1])
+            ret_array.extend([0,1])
         else:
-            input_array.extend([0,0])
-    if winner == 'x':
-        win = [1,0]
-    elif winner == 'o':
-        win = [0,1]
-    else:
-        win = [0,0]
-    formatted_training_data.append((np.array([input_array]).transpose(), np.array([win]).T))
-# print(formatted_training_data)
-# a = np.array([[1,2,3,4,5]])
-# print(a)
-# print(a.T)
-net = neural_net.Network([18, 20, 20, 2])
-# Train
-print("Training...")
-for _ in range(100):
-    net.update_from_batch(formatted_training_data, 1.0)
+            ret_array.extend([0,0])
+    return np.array([ret_array]).transpose()
+
+def format_training_data(game_data):
+    formatted_training_data = []
+    for game_state, winner in game_data:
+        nn_input = game_state_to_matrix(game_state)
+        win = get_matrix_from_marker(winner)
+        formatted_training_data.append((nn_input, win))
+    return formatted_training_data
 
 def test_game():
     for state, winner in formatted_training_data:
@@ -117,7 +127,30 @@ def test_game():
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
-        #print(len(state.T[0]))
-        #n_grid = TTTGrid(state.T[0])
-        #n_grid.display_grid()
-test_game()
+def xsave_net(net, filename):
+    print(f'saving NN as "{filename}"...')
+    with open(filename, 'wb') as file:
+        pickle.dump(net, file)
+
+def xload_net(filename):
+    print(f'loading NN from "{filename}"...')
+    with open(filename, 'rb') as file:
+        net =pickle.load(file)
+    return net
+
+if __name__ == "__main__":
+    random_games = get_random_training_data(100)
+    random.shuffle(random_games)
+    print("Size of training data:", len(random_games))
+    formatted_training_data = format_training_data(random_games)
+
+    # Create a new net or load the previous one.
+    # net = neural_net.Network([18, 20, 20, 2])
+    net = neural_net.load_net('net.p')
+
+    # Train
+    print("Training...")
+    for _ in range(1000):
+        net.update_from_batch(formatted_training_data, 1.0)
+    net.save_net('net.p')
+    test_game()

@@ -1,5 +1,5 @@
 import numpy
-import random
+import pickle
 
 def sigmoid(z):
     return 1.0 / (1.0 + numpy.exp(-z))
@@ -7,12 +7,25 @@ def sigmoid(z):
 def sigmoid_prime(z):
     return sigmoid(z) * (1 - sigmoid(z))
 
+def load_net(filename):
+    print(f'loading NN from "{filename}"...')
+    with open(filename, 'rb') as file:
+        net = pickle.load(file)
+    return net
+
 class Network:
     def __init__(self, layer_sizes):
         self.layer_sizes = layer_sizes
         self.layers = len(layer_sizes)
         self.biases = [numpy.random.randn(y, 1) for y in layer_sizes[1:]]
         self.weights = [numpy.random.randn(y, x) for x, y in zip(layer_sizes[:-1], layer_sizes[1:])]
+
+    def save_net(self, filename):
+        print(f'saving NN as "{filename}"...')
+        with open(filename, 'wb') as file:
+            pickle.dump(self, file)
+
+
 
     def feedforward(self, a):
         """ a: a numpy matrix (n ,1) representing the input """
