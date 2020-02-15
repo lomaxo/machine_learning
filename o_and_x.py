@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import neural_net
+from copy import deepcopy
 import pickle
 
 class TTTGrid:
@@ -60,16 +61,25 @@ class TTTGrid:
                 match = False
         if match: return True
 
+    def test_win(self, player_marker):
+        return self.vertical_test(player_marker) or self.horizontal_test(player_marker) or self.diagonal_test(player_marker)
+
     def get_best_move(self, net, player):
         options = self.get_empty()
         if len(options) == 0:
             return None
+        results = []
         for move in options:
-            new_grid = copy(self)
-            new_grid.set_pos(player)
-            in_matrix = game_state_to_matrix(new_grid.grid_list)
-            out = net.feedforward(in_matrix)
-            print(out)
+            new_grid = deepcopy(self)
+            new_grid.set_pos(move, player)
+            score = get_score(net, new_grid.grid_list)
+            results.append((move, score))
+        if player == 'x':
+            best_move = min(results, key=lambda item: item[1])[0]
+        else:
+            best_move = max(results, key=lambda item: item[1])[0]
+        print(best_move)
+        return best_move
 
 def get_random_training_data(n_games):
     # Create training data
@@ -132,6 +142,12 @@ def format_training_data(game_data):
         formatted_training_data.append((nn_input, win))
     return formatted_training_data
 
+def get_score(net, grid_list):
+    in_matrix = game_state_to_matrix(grid_list)
+    out = net.feedforward(in_matrix)
+    return out[0][0]*(-1) + out[1][0]
+
+
 def test_game():
     for state, winner in formatted_training_data:
         out = net.feedforward(state)
@@ -142,13 +158,13 @@ def play_game(net):
     grid = TTTGrid()
     player_marker = 'x'
     draw = False
-    while not grid.vertical_test(player_marker) and not grid.horizontal_test(player_marker) and not grid.diagonal_test(player_marker) and not draw:
+    while not grid.test_win(player_marker) and not draw:
         if player_marker == 'x':
             player_marker = 'o'
         else:
             player_marker = 'x'
         next_mark = grid.get_best_move(net, player_marker)
-        if not next_mark:
+        if next_mark == None:
             draw = True
         else:
             grid.set_pos(next_mark, player_marker)
@@ -171,7 +187,8 @@ if __name__ == "__main__":
 
     # Train
     print("Training...")
-    for _ in range(100):
+    for _ in range(1000):
         net.update_from_batch(formatted_training_data, 1.0)
     net.save_net('net.p')
-    test_game()
+    # test_game()
+    play_game(net)
