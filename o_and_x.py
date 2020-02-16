@@ -162,7 +162,7 @@ def get_random_training_data(n_games):
 
 
 
-def format_training_data(game_data):
+def format_game_data(game_data):
     formatted_training_data = []
     for game_state, winner in game_data:
         nn_input = game_state_to_matrix(game_state)
@@ -227,6 +227,17 @@ def test_multiple_games(n_games, start_player, o_net, x_net):
             wins[2] += 1
     return wins
 
+def compare(net1, net2):
+    # Play some games to test how successful it is
+    print("o: NN1, x: NN2, starter: o  --  ", end='')
+    print(test_multiple_games(100, 'o', net1, net2))
+    print("o: NN1, x: NN2, starter: x  --  ", end='')
+    print(test_multiple_games(100, 'x', net1, net2))
+    print("o: NN2, x: NN1, starter: o  --  ", end='')
+    print(test_multiple_games(100, 'o', net2, net1))
+    print("o: NN2, x: NN1, starter: x  --  ", end='')
+    print(test_multiple_games(100, 'x', net2, net1))
+
 if __name__ == "__main__":
     # Create some random test data
 
@@ -242,25 +253,18 @@ if __name__ == "__main__":
 
     # Train
     # print("Training.")
-    # print("Random training data...")
-    # net.SGD(formatted_training_data, 1, 100, .5)
-    # for _ in range(100):
-    #     net.update_from_batch(formatted_training_data, 1.0)
+    for _ in range(10):
+        print("\nCreating training data...")
+        data = []
+        for g in range(10000):
+            data.extend(play_game(TTTGrid('o'), net, net2, False))
+            data.extend(play_game(TTTGrid('o'), net2, net, False))
+            data.extend(play_game(TTTGrid('x'), net, net2, False))
+            data.extend(play_game(TTTGrid('x'), net2, net, False))
+        print("SGD Training...")
+        net2.SGD(format_game_data(data), 10, 1000, 1.0)
+        print("Testing...")
+        compare(net, net2)
+        net2.save('net_v2.p')
 
-    # Play some games to test how successful it is
-    print("\no: NN, x: NN, starter: o")
-    print(test_multiple_games(100, 'o', net, net))
-    print("\no: NN, x: NN, starter: x")
-    print(test_multiple_games(100, 'x', net, net))
-
-    print("\no: NN, x: random, starter: o")
-    print(test_multiple_games(100, 'o', net, None))
-    print("\no: NN, x: random, starter: x")
-    print(test_multiple_games(100, 'x', net, None))
-
-    print("\no: random, x: NN, starter: o")
-    print(test_multiple_games(100, 'o', None, net))
-    print("\no: random, x: NN, starter: x")
-    print(test_multiple_games(100, 'x', None, net))
-
-    play_game(TTTGrid('o'), net, net, True)
+    # play_game(TTTGrid('o'), net, net, True)

@@ -34,7 +34,7 @@ class Network:
             a = sigmoid(numpy.dot(w, a) + b)
         return a
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta, test_data=None):
+    def SGD(self, training_data, epochs, mini_batch_size, eta, test_data=None, ):
         """ training_data: a list of tuples of (input, expected result) """
         if test_data: n_test = len(test_data)
         n = len(training_data)
