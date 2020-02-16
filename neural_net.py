@@ -12,6 +12,7 @@ def load_net(filename):
     print(f'loading NN from "{filename}"...')
     with open(filename, 'rb') as file:
         net = pickle.load(file)
+    print(f'NN loaded {filename}. Layers: {net.layer_sizes}')
     return net
 
 class Network:

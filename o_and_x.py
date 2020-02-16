@@ -249,8 +249,13 @@ if __name__ == "__main__":
     # Create a new net or load the previous one.
 
     # net_latest = neural_net.Network([18, 20, 2])
-    working_net_filename = "net_v3.p"
-    net_latest = neural_net.load_net(working_net_filename)
+    working_net_filename = "net_v4.p"
+    try:
+        net_latest = neural_net.load_net(working_net_filename)
+    except (OSError, IOError):
+        print(f'Creating new network {working_net_filename}.')
+        net_latest = neural_net.Network([18, 20, 20, 2])
+
     net_v1 = neural_net.load_net('net.p')
 
     # Train
@@ -261,12 +266,12 @@ if __name__ == "__main__":
         for g in range(1000):
             data.extend(play_game(TTTGrid('o'), net_v1, net_latest, False))
             data.extend(play_game(TTTGrid('o'), net_latest, net_v1, False))
-            data.extend(play_game(TTTGrid('x'), net_v1, net_latest, False))
-            data.extend(play_game(TTTGrid('x'), net_latest, net_v1, False))
+            # data.extend(play_game(TTTGrid('x'), net_v1, net_latest, False))
+            # data.extend(play_game(TTTGrid('x'), net_latest, net_v1, False))
             data.extend(play_game(TTTGrid('o'), None, net_latest, False))
             data.extend(play_game(TTTGrid('o'), net_latest, None, False))
-            data.extend(play_game(TTTGrid('x'), None, net_latest, False))
-            data.extend(play_game(TTTGrid('x'), net_latest, None, False))
+            # data.extend(play_game(TTTGrid('x'), None, net_latest, False))
+            # data.extend(play_game(TTTGrid('x'), net_latest, None, False))
         print("SGD Training...")
         net_latest.SGD(format_game_data(data), 10, 1000, 1.0)
         print("Testing...")
