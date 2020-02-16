@@ -178,7 +178,7 @@ def get_score(net, grid_list):
 
 def test_game():
     for state, winner in formatted_training_data:
-        out = net.feedforward(state)
+        out = net_v1.feedforward(state)
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
@@ -203,7 +203,7 @@ def play_game(grid, o_net, x_net, display=False):
         else:
             grid.set_pos(next_mark)
             if display: grid.display_grid()
-        positions.append(grid.grid_list)
+        positions.append(deepcopy(grid.grid_list))
     if not draw:
         if display: print(f"Winner is {grid.current_player}")
         winner = grid.current_player
@@ -248,23 +248,29 @@ if __name__ == "__main__":
 
     # Create a new net or load the previous one.
 
-    net2 = neural_net.Network([18, 20, 20, 2])
-    net = neural_net.load_net('net.p')
+    # net_latest = neural_net.Network([18, 20, 2])
+    working_net_filename = "net_v3.p"
+    net_latest = neural_net.load_net(working_net_filename)
+    net_v1 = neural_net.load_net('net.p')
 
     # Train
-    # print("Training.")
-    for _ in range(10):
-        print("\nCreating training data...")
+    print("Training.")
+    for i in range(100):
+        print(f"\nCreating training data... ({i})")
         data = []
-        for g in range(10000):
-            data.extend(play_game(TTTGrid('o'), net, net2, False))
-            data.extend(play_game(TTTGrid('o'), net2, net, False))
-            data.extend(play_game(TTTGrid('x'), net, net2, False))
-            data.extend(play_game(TTTGrid('x'), net2, net, False))
+        for g in range(1000):
+            data.extend(play_game(TTTGrid('o'), net_v1, net_latest, False))
+            data.extend(play_game(TTTGrid('o'), net_latest, net_v1, False))
+            data.extend(play_game(TTTGrid('x'), net_v1, net_latest, False))
+            data.extend(play_game(TTTGrid('x'), net_latest, net_v1, False))
+            data.extend(play_game(TTTGrid('o'), None, net_latest, False))
+            data.extend(play_game(TTTGrid('o'), net_latest, None, False))
+            data.extend(play_game(TTTGrid('x'), None, net_latest, False))
+            data.extend(play_game(TTTGrid('x'), net_latest, None, False))
         print("SGD Training...")
-        net2.SGD(format_game_data(data), 10, 1000, 1.0)
+        net_latest.SGD(format_game_data(data), 10, 1000, 1.0)
         print("Testing...")
-        compare(net, net2)
-        net2.save('net_v2.p')
-
-    # play_game(TTTGrid('o'), net, net, True)
+        compare(net_v1, net_latest)
+        net_latest.save_net(working_net_filename)
+        game = play_game(TTTGrid('o'), net_latest, net_latest, True)
+        print(game)
