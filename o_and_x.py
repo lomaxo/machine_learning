@@ -290,6 +290,8 @@ if __name__ == "__main__":
         score_as_o.append(test_multiple_games(100, 'o', net_latest, None))
         score_as_x.append(test_multiple_games(100, 'o', None, net_latest))
         print(f"Play first: {score_as_o[-1]['o']}% win, Play second: {score_as_x[-1]['x']}% win")
+        with open(net_latest.name+'_score.csv', 'a') as score_file:
+            score_file.write(f"{score_as_o[-1]['o']}, {score_as_x[-1]['x']}\n")
         train(None, net_latest)
         net_latest.save_net()
         # Display a game of the latest net playing against itself to see how well it plays.
