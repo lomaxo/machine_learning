@@ -229,10 +229,14 @@ def test_multiple_games(n_games, start_player, o_net, x_net):
 
 def compare(net1, net2, nn1 = 'NN1', nn2 = 'NN2'):
     # Play some games to test how successful it is
-    print(f"o: {nn1}, x: {nn2}, starter: o  ->  ", end='')
+    if net1: name1 = net1.name
+    else: name1 = 'Random'
+    if net2: name2 = net2.name
+    else: name2 = 'Random'
+    print(f"o: {name1}, x: {name2}, starter: o  ->  ", end='')
     print(test_multiple_games(100, 'o', net1, net2))
 
-    print(f"o: {nn2}, x: {nn1}, starter: o  ->  ", end='')
+    print(f"o: {name2}, x: {name1}, starter: o  ->  ", end='')
     print(test_multiple_games(100, 'o', net2, net1))
 
     # Can also compare when x plays first
@@ -261,25 +265,23 @@ def train(master_net, training_net):
     print("SGD Training...")
     net_latest.SGD(format_game_data(data), 10, 1000, 0.5)
 
-    # print("Testing...")
-    # compare(net_v1, net_latest, 'v1', 'new')
-    # compare(None, net_latest, 'random', 'new')
-
-    net_latest.save_net(working_net_filename)
-
-    # Display a game of the latest net playing against itself to see how well it plays.
-    # play_game(TTTGrid('o'), net_latest, net_latest, True)
-
 
 if __name__ == "__main__":
     # Create a new net or load the previous one.
     net_v1 = neural_net.load_net('net.p')
-    working_net_filename = "max.p"
+
+    working_net_name = "max"
+    working_net_filename = working_net_name + '.p'
     try:
         net_latest = neural_net.load_net(working_net_filename)
     except (OSError, IOError):
-        print(f'Creating new network {working_net_filename}.')
-        net_latest = neural_net.Network([18, 20, 2])
+        print(f"Creating new network {working_net_filename}.")
+        net_latest = neural_net.Network([18, 20, 2], working_net_name)
+
+
+    # compare(net_v1, None)
+    compare(net_latest, None)
+    # compare(net_v1, net_latest)
 
     # Train
     score_as_o = []
@@ -287,12 +289,9 @@ if __name__ == "__main__":
     while True:
         score_as_o.append(test_multiple_games(100, 'o', net_latest, None))
         score_as_x.append(test_multiple_games(100, 'o', None, net_latest))
-        print(f"First: {score_as_o[-1]['o']}% win, Second: {score_as_o[-1]['x']}% win")
+        print(f"Play first: {score_as_o[-1]['o']}% win, Play second: {score_as_x[-1]['x']}% win")
         train(None, net_latest)
+        net_latest.save_net()
+        # Display a game of the latest net playing against itself to see how well it plays.
+        # play_game(TTTGrid('o'), net_latest, net_latest, True)
 
-    # compare(net_v1, None, 'v1', 'random')
-    # compare(net_latest, None, 'marvin', 'random')
-    # compare(net_v1, net_latest, 'v1', 'marvin')
-
-
-    print(scores)

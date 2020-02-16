@@ -12,17 +12,25 @@ def load_net(filename):
     print(f'loading NN from "{filename}"...')
     with open(filename, 'rb') as file:
         net = pickle.load(file)
-    print(f'NN loaded {filename}. Layers: {net.layer_sizes}')
+
+    try:
+        name = net.name
+    except (AttributeError):
+        net.name = '??'
+    print(f'NN loaded {net.name}. Layers: {net.layer_sizes}')
     return net
 
 class Network:
-    def __init__(self, layer_sizes):
+    def __init__(self, layer_sizes, name):
         self.layer_sizes = layer_sizes
         self.layers = len(layer_sizes)
+        self.name = name
         self.biases = [numpy.random.randn(y, 1) for y in layer_sizes[1:]]
         self.weights = [numpy.random.randn(y, x) for x, y in zip(layer_sizes[:-1], layer_sizes[1:])]
 
-    def save_net(self, filename):
+    def save_net(self, filename = None):
+        if not filename:
+            filename = self.name + '.p'
         print(f'saving NN as "{filename}"...')
         with open(filename, 'wb') as file:
             pickle.dump(self, file)
