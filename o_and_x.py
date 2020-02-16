@@ -183,7 +183,7 @@ def test_game():
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
-def play_game(net, grid, x_move_func, o_move_func, display=False):
+def play_game(net, grid, o_move_func, x_move_func, display=False):
     # grid = TTTGrid()
     #player_marker = 'x'
     draw = False
@@ -211,6 +211,27 @@ def play_game(net, grid, x_move_func, o_move_func, display=False):
         data.append((pos, winner))
     return data
 
+def test_multiple_games(net, n_games, start_player, o_random = False, x_random = False):
+    wins = [0,0,0]
+    for g in range(n_games):
+        grid = TTTGrid()
+        if x_random: x_func = grid.get_random_move
+        else: x_func = grid.get_best_move
+
+        if o_random: o_func = grid.get_random_move
+        else: o_func = grid.get_best_move
+
+        grid.current_player = start_player
+        grid.next_player()
+        winner = play_game(net, grid, o_func, x_func, False)[-1][1]
+        if winner == 'o':
+            wins[0] += 1
+        elif winner == 'x':
+            wins[1] += 1
+        else:
+            wins[2] += 1
+    return wins
+
 if __name__ == "__main__":
     # Create some random test data
 
@@ -236,17 +257,19 @@ if __name__ == "__main__":
     #     data = play_game(net)
     #     net.update_from_batch(format_training_data(data), 1.0)
     # net.save_net('net.p')
-    n_games = 100
-    wins = [0,0,0]
-    for g in range(n_games):
-        grid = TTTGrid()
-        grid.current_player = 'x'
-        winner = play_game(net, grid, grid.get_best_move, grid.get_best_move, False)[-1][1]
-        if winner == 'x':
-            wins[0] += 1
-        elif winner == 'o':
-            wins[1] += 1
-        else:
-            wins[2] += 1
 
-    print(wins)
+    # Play some games to test how successful it is
+    print("\no: NN, x: NN, starter: o")
+    print(test_multiple_games(net, 100, 'o'))
+    print("\no: NN, x: NN, starter: x")
+    print(test_multiple_games(net, 100, 'x'))
+
+    print("\no: NN, x: random, starter: o")
+    print(test_multiple_games(net, 100, 'o', False, True))
+    print("\no: NN, x: random, starter: x")
+    print(test_multiple_games(net, 100, 'x', False, True))
+
+    print("\no: random, x: NN, starter: o")
+    print(test_multiple_games(net, 100, 'o', True, False))
+    print("\no: random, x: NN, starter: x")
+    print(test_multiple_games(net, 100, 'x', True, False))
