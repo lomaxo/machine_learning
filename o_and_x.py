@@ -216,25 +216,28 @@ def play_game(grid, o_net, x_net, display=False):
     return data
 
 def test_multiple_games(n_games, start_player, o_net, x_net):
-    wins = [0,0,0]
+    wins = {'o': 0,'x': 0, 'draw': 0}
     for g in range(n_games):
         winner = play_game(TTTGrid(start_player), o_net, x_net, False)[-1][1]
         if winner == 'o':
-            wins[0] += 1
+            wins['o'] += 1
         elif winner == 'x':
-            wins[1] += 1
+            wins['x'] += 1
         else:
-            wins[2] += 1
+            wins['draw'] += 1
     return wins
 
 def compare(net1, net2, nn1 = 'NN1', nn2 = 'NN2'):
     # Play some games to test how successful it is
-    print(f"o: {nn1}, x: {nn2}, starter: o  --  ", end='')
+    print(f"o: {nn1}, x: {nn2}, starter: o  ->  ", end='')
     print(test_multiple_games(100, 'o', net1, net2))
+
+    print(f"o: {nn2}, x: {nn1}, starter: o  ->  ", end='')
+    print(test_multiple_games(100, 'o', net2, net1))
+
+    # Can also compare when x plays first
     # print(f"o: {nn1}, x: {nn2}, starter: x  --  ", end='')
     # print(test_multiple_games(100, 'x', net1, net2))
-    print(f"o: {nn2}, x: {nn1}, starter: o  --  ", end='')
-    print(test_multiple_games(100, 'o', net2, net1))
     # print(f"o: {nn2}, x: {nn1}, starter: x  --  ", end='')
     # print(test_multiple_games(100, 'x', net2, net1))
 
@@ -242,39 +245,36 @@ def train(master_net, training_net):
     print(f"\nCreating training data...")
     data = []
     for g in range(1000):
+        # Play against previous net
         data.extend(play_game(TTTGrid('o'), master_net, training_net, False))
         data.extend(play_game(TTTGrid('o'), training_net, master_net, False))
-        # data.extend(play_game(TTTGrid('x'), net_v1, net_latest, False))
-        # data.extend(play_game(TTTGrid('x'), net_latest, net_v1, False))
+        # Play against random
         data.extend(play_game(TTTGrid('o'), None, training_net, False))
         data.extend(play_game(TTTGrid('o'), training_net, None, False))
+
+        # Train with x going first
+        # data.extend(play_game(TTTGrid('x'), net_v1, net_latest, False))
+        # data.extend(play_game(TTTGrid('x'), net_latest, net_v1, False))
         # data.extend(play_game(TTTGrid('x'), None, net_latest, False))
         # data.extend(play_game(TTTGrid('x'), net_latest, None, False))
 
     print("SGD Training...")
     net_latest.SGD(format_game_data(data), 10, 1000, 0.5)
 
-    print("Testing...")
-    compare(net_v1, net_latest, 'v1', 'new')
-    compare(None, net_latest, 'random', 'new')
+    # print("Testing...")
+    # compare(net_v1, net_latest, 'v1', 'new')
+    # compare(None, net_latest, 'random', 'new')
+
     net_latest.save_net(working_net_filename)
 
     # Display a game of the latest net playing against itself to see how well it plays.
-    play_game(TTTGrid('o'), net_latest, net_latest, True)
+    # play_game(TTTGrid('o'), net_latest, net_latest, True)
 
 
 if __name__ == "__main__":
-    # Create some random test data
-
-    # random_games = get_random_training_data(10000)
-    # random.shuffle(random_games)
-    # print("Size of training data:", len(random_games))
-    # formatted_training_data = format_training_data(random_games)
-
     # Create a new net or load the previous one.
-
     net_v1 = neural_net.load_net('net.p')
-    working_net_filename = "marvin.p"
+    working_net_filename = "max.p"
     try:
         net_latest = neural_net.load_net(working_net_filename)
     except (OSError, IOError):
@@ -282,7 +282,17 @@ if __name__ == "__main__":
         net_latest = neural_net.Network([18, 20, 2])
 
     # Train
+    score_as_o = []
+    score_as_x = []
     while True:
-        train(net_v1, net_latest)
-    # compare(net_v1, None, 'v1', 'random')
+        score_as_o.append(test_multiple_games(100, 'o', net_latest, None))
+        score_as_x.append(test_multiple_games(100, 'o', None, net_latest))
+        print(f"First: {score_as_o[-1]['o']}% win, Second: {score_as_o[-1]['x']}% win")
+        train(None, net_latest)
 
+    # compare(net_v1, None, 'v1', 'random')
+    # compare(net_latest, None, 'marvin', 'random')
+    # compare(net_v1, net_latest, 'v1', 'marvin')
+
+
+    print(scores)

@@ -47,7 +47,8 @@ class Network:
             if test_data:
                 print(f"Epoch {j}, {self.evaluate(test_data)} /  {n_test})")
             else:
-                print(f"Epoch {j} complete.")
+                print(f"{j}...", end= '')
+        print()
 
     def update_from_batch(self, batch, eta):
         nabla_b = [numpy.zeros(b.shape) for b in self.biases]
