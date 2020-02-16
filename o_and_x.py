@@ -2,12 +2,11 @@ import random
 import numpy as np
 import neural_net
 from copy import deepcopy
-import pickle
 
 class TTTGrid:
-    def __init__(self, grid_list = []):
+    def __init__(self, start_player = 'o', grid_list = []):
         self.GRID_SIZE = 3
-        self.current_player = 'x'
+        self.current_player = start_player
         if len(grid_list) > 0 and len(grid_list) != self.GRID_SIZE**2:
             raise("Wrong grid size")
 
@@ -103,7 +102,7 @@ class TTTGrid:
         # print(best_move)
         return best_move
 
-    def get_random_move(self, net, player = None):
+    def get_random_move(self, player = None):
         if not player:
             player = self.current_player
         options = self.get_empty()
@@ -183,17 +182,22 @@ def test_game():
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
-def play_game(net, grid, o_move_func, x_move_func, display=False):
-    # grid = TTTGrid()
-    #player_marker = 'x'
+def play_game(grid, o_net, x_net, display=False):
     draw = False
     positions = []
+    grid.next_player()
     while not grid.test_win() and not draw:
         grid.next_player()
         if grid.current_player == 'x':
-            next_mark = x_move_func(net)
+            if x_net == None:
+                next_mark = grid.get_random_move()
+            else:
+                next_mark = grid.get_best_move(x_net)
         else:
-            next_mark = o_move_func(net)
+            if o_net == None:
+                next_mark = grid.get_random_move()
+            else:
+                next_mark = grid.get_best_move(o_net)
         if next_mark == None:
             draw = True
         else:
@@ -211,19 +215,10 @@ def play_game(net, grid, o_move_func, x_move_func, display=False):
         data.append((pos, winner))
     return data
 
-def test_multiple_games(net, n_games, start_player, o_random = False, x_random = False):
+def test_multiple_games(n_games, start_player, o_net, x_net):
     wins = [0,0,0]
     for g in range(n_games):
-        grid = TTTGrid()
-        if x_random: x_func = grid.get_random_move
-        else: x_func = grid.get_best_move
-
-        if o_random: o_func = grid.get_random_move
-        else: o_func = grid.get_best_move
-
-        grid.current_player = start_player
-        grid.next_player()
-        winner = play_game(net, grid, o_func, x_func, False)[-1][1]
+        winner = play_game(TTTGrid(start_player), o_net, x_net, False)[-1][1]
         if winner == 'o':
             wins[0] += 1
         elif winner == 'x':
@@ -235,14 +230,14 @@ def test_multiple_games(net, n_games, start_player, o_random = False, x_random =
 if __name__ == "__main__":
     # Create some random test data
 
-    random_games = get_random_training_data(10000)
-    random.shuffle(random_games)
-    print("Size of training data:", len(random_games))
-    formatted_training_data = format_training_data(random_games)
+    # random_games = get_random_training_data(10000)
+    # random.shuffle(random_games)
+    # print("Size of training data:", len(random_games))
+    # formatted_training_data = format_training_data(random_games)
 
     # Create a new net or load the previous one.
 
-    # net = neural_net.Network([18, 20, 20, 2])
+    net2 = neural_net.Network([18, 20, 20, 2])
     net = neural_net.load_net('net.p')
 
     # Train
@@ -252,24 +247,20 @@ if __name__ == "__main__":
     # for _ in range(100):
     #     net.update_from_batch(formatted_training_data, 1.0)
 
-    # print("Self-play...")
-    # for _ in range(100):
-    #     data = play_game(net)
-    #     net.update_from_batch(format_training_data(data), 1.0)
-    # net.save_net('net.p')
-
     # Play some games to test how successful it is
     print("\no: NN, x: NN, starter: o")
-    print(test_multiple_games(net, 100, 'o'))
+    print(test_multiple_games(100, 'o', net, net))
     print("\no: NN, x: NN, starter: x")
-    print(test_multiple_games(net, 100, 'x'))
+    print(test_multiple_games(100, 'x', net, net))
 
     print("\no: NN, x: random, starter: o")
-    print(test_multiple_games(net, 100, 'o', False, True))
+    print(test_multiple_games(100, 'o', net, None))
     print("\no: NN, x: random, starter: x")
-    print(test_multiple_games(net, 100, 'x', False, True))
+    print(test_multiple_games(100, 'x', net, None))
 
     print("\no: random, x: NN, starter: o")
-    print(test_multiple_games(net, 100, 'o', True, False))
+    print(test_multiple_games(100, 'o', None, net))
     print("\no: random, x: NN, starter: x")
-    print(test_multiple_games(net, 100, 'x', True, False))
+    print(test_multiple_games(100, 'x', None, net))
+
+    play_game(TTTGrid('o'), net, net, True)
