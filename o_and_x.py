@@ -29,7 +29,9 @@ class TTTGrid:
                 ret.append(i)
         return ret
 
-    def set_pos(self, pos, marker):
+    def set_pos(self, pos, marker = None):
+        if not marker:
+            marker = self.current_player
         self.grid_list[pos] = marker
 
     def display_grid(self):
@@ -82,7 +84,9 @@ class TTTGrid:
             marker = self.current_player
         return self.vertical_test(marker) or self.horizontal_test(marker) or self.diagonal_test(marker)
 
-    def get_best_move(self, net, player):
+    def get_best_move(self, net, player = None):
+        if not player:
+            player = self.current_player
         options = self.get_empty()
         if len(options) == 0:
             return None
@@ -98,6 +102,14 @@ class TTTGrid:
             best_move = max(results, key=lambda item: item[1])[0]
         # print(best_move)
         return best_move
+
+    def get_random_move(self, net, player = None):
+        if not player:
+            player = self.current_player
+        options = self.get_empty()
+        if len(options) == 0:
+            return None
+        return random.choice(options)
 
 def get_matrix_from_marker(marker):
     if marker == 'x':
@@ -119,6 +131,7 @@ def game_state_to_matrix(grid_list):
             ret_array.extend([0,0])
     return np.array([ret_array]).transpose()
 
+# TODO: Tidy this function to use grid.test_win() and grid.next_player
 def get_random_training_data(n_games):
     # Create training data
     training_data = []
@@ -170,26 +183,26 @@ def test_game():
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
-def play_game(net, grid, display=False):
+def play_game(net, grid, x_move_func, o_move_func, display=False):
     # grid = TTTGrid()
-    player_marker = 'x'
+    #player_marker = 'x'
     draw = False
     positions = []
-    while not grid.test_win(player_marker) and not draw:
-        if player_marker == 'x':
-            player_marker = 'o'
+    while not grid.test_win() and not draw:
+        grid.next_player()
+        if grid.current_player == 'x':
+            next_mark = x_move_func(net)
         else:
-            player_marker = 'x'
-        next_mark = grid.get_best_move(net, player_marker)
+            next_mark = o_move_func(net)
         if next_mark == None:
             draw = True
         else:
-            grid.set_pos(next_mark, player_marker)
+            grid.set_pos(next_mark)
             if display: grid.display_grid()
         positions.append(grid.grid_list)
     if not draw:
-        if display: print(f"Winner is {player_marker}")
-        winner = player_marker
+        if display: print(f"Winner is {grid.current_player}")
+        winner = grid.current_player
     else:
         if display: print("Draw")
         winner = '-'
@@ -212,9 +225,9 @@ if __name__ == "__main__":
     net = neural_net.load_net('net.p')
 
     # Train
-    print("Training.")
-    print("Random training data...")
-    net.SGD(formatted_training_data, 1, 100, .5)
+    # print("Training.")
+    # print("Random training data...")
+    # net.SGD(formatted_training_data, 1, 100, .5)
     # for _ in range(100):
     #     net.update_from_batch(formatted_training_data, 1.0)
 
@@ -222,6 +235,18 @@ if __name__ == "__main__":
     # for _ in range(100):
     #     data = play_game(net)
     #     net.update_from_batch(format_training_data(data), 1.0)
-    net.save_net('net.p')
-    grid = TTTGrid()
-    play_game(net, grid, True)
+    # net.save_net('net.p')
+    n_games = 100
+    wins = [0,0,0]
+    for g in range(n_games):
+        grid = TTTGrid()
+        grid.current_player = 'x'
+        winner = play_game(net, grid, grid.get_best_move, grid.get_best_move, False)[-1][1]
+        if winner == 'x':
+            wins[0] += 1
+        elif winner == 'o':
+            wins[1] += 1
+        else:
+            wins[2] += 1
+
+    print(wins)
