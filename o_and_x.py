@@ -7,6 +7,7 @@ import pickle
 class TTTGrid:
     def __init__(self, grid_list = []):
         self.GRID_SIZE = 3
+        self.current_player = 'x'
         if len(grid_list) > 0 and len(grid_list) != self.GRID_SIZE**2:
             raise("Wrong grid size")
 
@@ -14,6 +15,12 @@ class TTTGrid:
             self.grid_list = grid_list
         else:
             self.grid_list = [None] * self.GRID_SIZE**2
+
+    def next_player(self):
+        if self.current_player == 'x':
+            self.current_player = 'o'
+        else:
+            self.current_player = 'x'
 
     def get_empty(self):
         ret = []
@@ -34,7 +41,9 @@ class TTTGrid:
             print("\n")
         print("------------")
 
-    def horizontal_test(self, marker):
+    def horizontal_test(self, marker = None):
+        if not marker:
+            marker = self.current_player
         for row_i in range(0, len(self.grid_list), self.GRID_SIZE):
             match = True
             for i in range(self.GRID_SIZE):
@@ -42,7 +51,9 @@ class TTTGrid:
                     match = False
             if match: return True
 
-    def vertical_test(self, marker):
+    def vertical_test(self, marker = None):
+        if not marker:
+            marker = self.current_player
         for column_i in range(0, self.GRID_SIZE):
             match = True
             for i in range(self.GRID_SIZE):
@@ -50,7 +61,9 @@ class TTTGrid:
                     match = False
             if match: return True
 
-    def diagonal_test(self, marker):
+    def diagonal_test(self, marker = None):
+        if not marker:
+            marker = self.current_player
         match = True
         if self.grid_list[0] == marker and self.grid_list[4] == marker and self.grid_list[8] == marker: return True
         if self.grid_list[2] == marker and self.grid_list[4] == marker and self.grid_list[6] == marker: return True
@@ -64,8 +77,10 @@ class TTTGrid:
         #         match = False
         # if match: return True
 
-    def test_win(self, player_marker):
-        return self.vertical_test(player_marker) or self.horizontal_test(player_marker) or self.diagonal_test(player_marker)
+    def test_win(self, marker = None):
+        if not marker:
+            marker = self.current_player
+        return self.vertical_test(marker) or self.horizontal_test(marker) or self.diagonal_test(marker)
 
     def get_best_move(self, net, player):
         options = self.get_empty()
@@ -83,6 +98,26 @@ class TTTGrid:
             best_move = max(results, key=lambda item: item[1])[0]
         # print(best_move)
         return best_move
+
+def get_matrix_from_marker(marker):
+    if marker == 'x':
+        return np.array([[1,0]]).transpose()
+    elif marker == 'o':
+        return np.array([[0,1]]).transpose()
+    else:
+        return np.array([[0,0]]).transpose()
+
+
+def game_state_to_matrix(grid_list):
+    ret_array = []
+    for i in grid_list:
+        if i == 'x':
+            ret_array.extend([1,0])
+        elif i == 'o':
+            ret_array.extend([0,1])
+        else:
+            ret_array.extend([0,0])
+    return np.array([ret_array]).transpose()
 
 def get_random_training_data(n_games):
     # Create training data
@@ -113,25 +148,7 @@ def get_random_training_data(n_games):
                 training_data.append((pos, '-'))
     return training_data
 
-def get_matrix_from_marker(marker):
-    if marker == 'x':
-        return np.array([[1,0]]).transpose()
-    elif marker == 'o':
-        return np.array([[0,1]]).transpose()
-    else:
-        return np.array([[0,0]]).transpose()
 
-
-def game_state_to_matrix(grid_list):
-    ret_array = []
-    for i in grid_list:
-        if i == 'x':
-            ret_array.extend([1,0])
-        elif i == 'o':
-            ret_array.extend([0,1])
-        else:
-            ret_array.extend([0,0])
-    return np.array([ret_array]).transpose()
 
 def format_training_data(game_data):
     formatted_training_data = []
@@ -153,8 +170,8 @@ def test_game():
         score = out[0][0]*(-1) + out[1][0]
         print(f"{out.T}, {winner.T}, {score}")
 
-def play_game(net, display=False):
-    grid = TTTGrid()
+def play_game(net, grid, display=False):
+    # grid = TTTGrid()
     player_marker = 'x'
     draw = False
     positions = []
@@ -197,7 +214,7 @@ if __name__ == "__main__":
     # Train
     print("Training.")
     print("Random training data...")
-    net.SGD(formatted_training_data, 10, 1000, 1)
+    net.SGD(formatted_training_data, 1, 100, .5)
     # for _ in range(100):
     #     net.update_from_batch(formatted_training_data, 1.0)
 
@@ -206,4 +223,5 @@ if __name__ == "__main__":
     #     data = play_game(net)
     #     net.update_from_batch(format_training_data(data), 1.0)
     net.save_net('net.p')
-    play_game(net, True)
+    grid = TTTGrid()
+    play_game(net, grid, True)
