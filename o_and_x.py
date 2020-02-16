@@ -130,7 +130,7 @@ def game_state_to_matrix(grid_list):
             ret_array.extend([0,0])
     return np.array([ret_array]).transpose()
 
-# TODO: Tidy this function to use grid.test_win() and grid.next_player
+# TODO: Tidy this function to use grid.test_win() and grid.next_player. OR remove because we can use play_game to produce random test dat now.
 def get_random_training_data(n_games):
     # Create training data
     training_data = []
@@ -227,16 +227,41 @@ def test_multiple_games(n_games, start_player, o_net, x_net):
             wins[2] += 1
     return wins
 
-def compare(net1, net2):
+def compare(net1, net2, nn1 = 'NN1', nn2 = 'NN2'):
     # Play some games to test how successful it is
-    print("o: NN1, x: NN2, starter: o  --  ", end='')
+    print(f"o: {nn1}, x: {nn2}, starter: o  --  ", end='')
     print(test_multiple_games(100, 'o', net1, net2))
-    print("o: NN1, x: NN2, starter: x  --  ", end='')
-    print(test_multiple_games(100, 'x', net1, net2))
-    print("o: NN2, x: NN1, starter: o  --  ", end='')
+    # print(f"o: {nn1}, x: {nn2}, starter: x  --  ", end='')
+    # print(test_multiple_games(100, 'x', net1, net2))
+    print(f"o: {nn2}, x: {nn1}, starter: o  --  ", end='')
     print(test_multiple_games(100, 'o', net2, net1))
-    print("o: NN2, x: NN1, starter: x  --  ", end='')
-    print(test_multiple_games(100, 'x', net2, net1))
+    # print(f"o: {nn2}, x: {nn1}, starter: x  --  ", end='')
+    # print(test_multiple_games(100, 'x', net2, net1))
+
+def train(master_net, training_net):
+    print(f"\nCreating training data...")
+    data = []
+    for g in range(1000):
+        data.extend(play_game(TTTGrid('o'), master_net, training_net, False))
+        data.extend(play_game(TTTGrid('o'), training_net, master_net, False))
+        # data.extend(play_game(TTTGrid('x'), net_v1, net_latest, False))
+        # data.extend(play_game(TTTGrid('x'), net_latest, net_v1, False))
+        data.extend(play_game(TTTGrid('o'), None, training_net, False))
+        data.extend(play_game(TTTGrid('o'), training_net, None, False))
+        # data.extend(play_game(TTTGrid('x'), None, net_latest, False))
+        # data.extend(play_game(TTTGrid('x'), net_latest, None, False))
+
+    print("SGD Training...")
+    net_latest.SGD(format_game_data(data), 10, 1000, 0.5)
+
+    print("Testing...")
+    compare(net_v1, net_latest, 'v1', 'new')
+    compare(None, net_latest, 'random', 'new')
+    net_latest.save_net(working_net_filename)
+
+    # Display a game of the latest net playing against itself to see how well it plays.
+    play_game(TTTGrid('o'), net_latest, net_latest, True)
+
 
 if __name__ == "__main__":
     # Create some random test data
@@ -248,34 +273,16 @@ if __name__ == "__main__":
 
     # Create a new net or load the previous one.
 
-    # net_latest = neural_net.Network([18, 20, 2])
-    working_net_filename = "net_v4.p"
+    net_v1 = neural_net.load_net('net.p')
+    working_net_filename = "marvin.p"
     try:
         net_latest = neural_net.load_net(working_net_filename)
     except (OSError, IOError):
         print(f'Creating new network {working_net_filename}.')
-        net_latest = neural_net.Network([18, 20, 20, 2])
-
-    net_v1 = neural_net.load_net('net.p')
+        net_latest = neural_net.Network([18, 20, 2])
 
     # Train
-    print("Training.")
-    for i in range(100):
-        print(f"\nCreating training data... ({i})")
-        data = []
-        for g in range(1000):
-            data.extend(play_game(TTTGrid('o'), net_v1, net_latest, False))
-            data.extend(play_game(TTTGrid('o'), net_latest, net_v1, False))
-            # data.extend(play_game(TTTGrid('x'), net_v1, net_latest, False))
-            # data.extend(play_game(TTTGrid('x'), net_latest, net_v1, False))
-            data.extend(play_game(TTTGrid('o'), None, net_latest, False))
-            data.extend(play_game(TTTGrid('o'), net_latest, None, False))
-            # data.extend(play_game(TTTGrid('x'), None, net_latest, False))
-            # data.extend(play_game(TTTGrid('x'), net_latest, None, False))
-        print("SGD Training...")
-        net_latest.SGD(format_game_data(data), 10, 1000, 1.0)
-        print("Testing...")
-        compare(net_v1, net_latest)
-        net_latest.save_net(working_net_filename)
-        game = play_game(TTTGrid('o'), net_latest, net_latest, True)
-        print(game)
+    while True:
+        train(net_v1, net_latest)
+    # compare(net_v1, None, 'v1', 'random')
+
