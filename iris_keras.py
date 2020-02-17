@@ -26,13 +26,13 @@ train_X, test_X, train_y, test_y = train_test_split(X, y, train_size=0.5, random
 #
 # print(f"Test fraction correct (Accuracy) = {lr.score(test_X, test_y):.2f}")
 
-def one_hot_encode_object_array(arr):
-    '''One hot encode a numpy array of objects (e.g. strings)'''
-    uniques, ids = np.unique(arr, return_inverse=True)
-    return np_utils.to_categorical(ids, len(uniques))
-
-train_y_ohe = one_hot_encode_object_array(train_y)
-test_y_ohe = one_hot_encode_object_array(test_y)
+# def one_hot_encode_object_array(arr):
+#     '''One hot encode a numpy array of objects (e.g. strings)'''
+#     uniques, ids = np.unique(arr, return_inverse=True)
+#     return np_utils.to_categorical(ids, len(uniques))
+#
+# train_y_ohe = one_hot_encode_object_array(train_y)
+# test_y_ohe = one_hot_encode_object_array(test_y)
 
 model = Sequential()
 model.add(Dense(4, input_dim=4, activation='relu'))
