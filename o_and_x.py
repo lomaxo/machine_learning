@@ -269,31 +269,31 @@ def train(master_net, training_net):
 if __name__ == "__main__":
     # Create a new net or load the previous one.
     net_v1 = neural_net.load_net('net.p')
-
-    working_net_name = "max"
+    net_max = neural_net.load_net('max.p')
+    working_net_name = "wilma"
     working_net_filename = working_net_name + '.p'
     try:
         net_latest = neural_net.load_net(working_net_filename)
     except (OSError, IOError):
         print(f"Creating new network {working_net_filename}.")
-        net_latest = neural_net.Network([18, 20, 2], working_net_name)
+        net_latest = neural_net.Network([18, 20, 20, 2], working_net_name)
 
 
-    # compare(net_v1, None)
-    compare(net_latest, None)
-    # compare(net_v1, net_latest)
+    compare(net_v1, None)
+    compare(net_max, None)
+    compare(net_v1, net_max)
 
     # Train
     score_as_o = []
     score_as_x = []
-    while True:
-        score_as_o.append(test_multiple_games(100, 'o', net_latest, None))
-        score_as_x.append(test_multiple_games(100, 'o', None, net_latest))
-        print(f"Play first: {score_as_o[-1]['o']}% win, Play second: {score_as_x[-1]['x']}% win")
-        with open(net_latest.name+'_score.csv', 'a') as score_file:
-            score_file.write(f"{score_as_o[-1]['o']}, {score_as_x[-1]['x']}\n")
-        train(None, net_latest)
-        net_latest.save_net()
-        # Display a game of the latest net playing against itself to see how well it plays.
-        # play_game(TTTGrid('o'), net_latest, net_latest, True)
-
+    # while True:
+    #     score_as_o.append(test_multiple_games(100, 'o', net_latest, None))
+    #     score_as_x.append(test_multiple_games(100, 'o', None, net_latest))
+    #     print(f"Play first: {score_as_o[-1]['o']}% win, Play second: {score_as_x[-1]['x']}% win")
+    #     with open(net_latest.name+'_score.csv', 'a') as score_file:
+    #         score_file.write(f"{score_as_o[-1]['o']}, {score_as_x[-1]['x']}\n")
+    #     train(None, net_latest)
+    #     net_latest.save_net()
+    # Display a game of the latest net playing against itself to see how well it plays.
+    # play_game(TTTGrid('o'), net_v1, None, True)
+    # play_game(TTTGrid('o'), net_max, None, True)
