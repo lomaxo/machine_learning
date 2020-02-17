@@ -117,7 +117,7 @@ class Network:
 
 if __name__ == "__main__":
     # Create a network
-    net = Network([2, 10, 1])
+    net = Network([2, 10, 1], 'Test')
 
     # Create some possible input matrices
     inp00 = numpy.array([[0],[0]])
